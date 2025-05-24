@@ -15,7 +15,7 @@ y:		.float	0.0
 	
 	.text
 	
-.macro	sine(%fdst, %fsrc)
+.macro	sin(%fdst, %fsrc)
 # First step of taylor series x
 	fmv.s		%fdst, %fsrc	# fdst = x,  will be result
 	
@@ -36,10 +36,10 @@ y:		.float	0.0
 	fdiv.s		ft8, ft9, ft11		# ft9 = (x^5)/(5!)
 	
 	fadd.s		%fdst, %fdst, ft8	# fdst = x - (x^3)/(3!) + (x^5)/(5!)
-	
 .end_macro
 
 main:
+	flw	ft0, delta, a0
 	li	t5, 128		# t5 is half of screen width
 	li	t6, 128		# t6 is half of screen height
 	
@@ -51,7 +51,7 @@ main:
 	li	a7, SYS_RDINT
 	ecall
 	
-	mv	t0, a0		# t0 is a
+	fcvt.s.wu	ft1, a0		# t1 is a
 
 # Get b from user
 	la	a0, bprompt
@@ -61,11 +61,11 @@ main:
 	li	a7, SYS_RDINT
 	ecall
 	
-	mv	t1, a0		# t1 is b
+	fcvt.s.wu	ft1, a0		# t2 is b
 
 	la	a0, delta
 	flw	ft0, (a0)
-	sine	fa0, ft0
+	sin	fa0, ft0
 	
 fin:
 # Temporarily print sine output
