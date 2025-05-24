@@ -4,13 +4,13 @@
 	.eqv	SYS_PRNINTU, 36
 
 	.data
-aprom:	.asciz	"Enter a: "
-bprom:	.asciz	"Enter b: "
+aprompt:	.asciz	"Enter a: "
+bprompt:	.asciz	"Enter b: "
 	
 	.text
 main:
 # Get a from user
-	la	a0, aprom
+	la	a0, aprompt
 	li	a7, SYS_PRNSTR
 	ecall
 	
@@ -20,7 +20,7 @@ main:
 	mv	t0, a0		# t0 is a
 
 # Get b from user
-	la	a0, bprom
+	la	a0, bprompt
 	li	a7, SYS_PRNSTR
 	ecall
 	
