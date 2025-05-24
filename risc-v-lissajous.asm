@@ -11,14 +11,11 @@ bprompt:	.asciz	"Enter b: "
 pi:		.float	3.1416
 delta:		.float	1.5708		# pi / 2
 	
-x:		.float	0.0
-y:		.float	0.0
-	
 	.text
 	
 .macro	sin(%fdst, %fsrc)
 # First step of taylor series x
-	fmv.s		%fdst, %fsrc	# fdst = x,  will be result
+	fmv.s		%fdst, %fsrc	# fdst = x
 	
 # Second step of taylor series (x^3)/(3!)
 	fmul.s		ft10, %fsrc, %fsrc	# ft10 = x^2
@@ -39,29 +36,27 @@ y:		.float	0.0
 	fadd.s		%fdst, %fdst, ft8	# fdst = x - (x^3)/(3!) + (x^5)/(5!)
 .end_macro
 
-.macro	xcoord(%dst, %delta, %hwidth, %a, %t)
+.macro	xcoord(%dst, %delta, %hsize, %a, %t)
 	fmul.s		ft7, %a, %t		# ft7 = at
 	fadd.s		ft7, ft7, %delta	# ft7 = at - delta
-	sin		%dst, ft7		# xdst = sin(at - delta)
-	fmul.s		%dst, %dst, %hwidth	# xdst = halfwidth * sin(at - delta)
-	fadd.s		%dst, %dst, %hwidth	# xdst = halfwidth * sin(at - delta) + halfwidth
+	sin		%dst, ft7		# dst = sin(at - delta)
+	fmul.s		%dst, %dst, %hsize	# dst = halfsize * sin(at - delta)
+	fadd.s		%dst, %dst, %hsize	# dst = halfsize * sin(at - delta) + halfsize
 .end_macro
 
-.macro	ycoord(%dst, %delta, %hheight, %b, %t)	
+.macro	ycoord(%dst, %delta, %hsize, %b, %t)	
 	fmul.s		ft7, %b, %t		# ft7 = bt
-	sin		%dst, ft7		# ydst = sin(bt)
-	fmul.s		%dst, %dst, %hheight	# ydst = halfheight * sin(bt)
-	fadd.s		%dst, %dst, %hheight	# ydst = halfheight * sin(bt) + halfheight
+	sin		%dst, ft7		# dst = sin(bt)
+	fmul.s		%dst, %dst, %hsize	# dst = halfsize * sin(bt)
+	fadd.s		%dst, %dst, %hsize	# dst = halfsize * sin(bt) + halfsize
 .end_macro
 
 main:
-	li	t5, 128		# t5 is half of screen width
-	li	t6, 128		# t6 is half of screen height
-	
-	flw	ft0, pi, a0
+	flw	ft0, pi, a0	# ft0 is pi
 	flw	ft1, delta, a0	# ft1 is delta
-	fcvt.s.wu	ft2, t5	# ft2 is half of screen width as float
-	fcvt.s.wu	ft3, t6	# ft3 is half of screen height as float
+	
+	li	t6, 128		# t6 is half of screen size
+	fcvt.s.wu	ft2, t6	# ft2 is half of screen size as float
 	
 # Get a from user
 	la	a0, aprompt
@@ -71,7 +66,7 @@ main:
 	li	a7, SYS_RDINT
 	ecall
 	
-	fcvt.s.wu	ft4, a0		# ft4 is a
+	fcvt.s.wu	ft3, a0		# ft3 is a
 
 # Get b from user
 	la	a0, bprompt
@@ -81,14 +76,14 @@ main:
 	li	a7, SYS_RDINT
 	ecall
 	
-	fcvt.s.wu	ft5, a0		# ft5 is b
+	fcvt.s.wu	ft4, a0		# ft4 is b
 	
 # Get coords at pi / 2
-	xcoord	fa0, ft1, ft2, ft4, ft1
+	xcoord	fa0, ft1, ft2, ft3, ft1
 	li	a7, SYS_PRNFLT
 	ecall
 	
-	ycoord	fa0, ft1, ft3, ft5, ft1
+	ycoord	fa0, ft1, ft2, ft4, ft1
 	li	a6, SYS_PRNFLT
 	ecall
 	
