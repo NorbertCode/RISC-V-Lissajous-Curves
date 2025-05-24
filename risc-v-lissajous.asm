@@ -8,6 +8,7 @@
 aprompt:	.asciz	"Enter a: "
 bprompt:	.asciz	"Enter b: "
 
+pi:		.float	3.1416
 delta:		.float	1.5708		# pi / 2
 	
 x:		.float	0.0
@@ -57,9 +58,10 @@ main:
 	li	t5, 128		# t5 is half of screen width
 	li	t6, 128		# t6 is half of screen height
 	
-	flw	ft0, delta, a0	# ft0 is delta
-	fcvt.s.wu	ft1, t5	# ft1 is half of screen width as float
-	fcvt.s.wu	ft2, t6	# ft2 is half of screen height as float
+	flw	ft0, pi, a0
+	flw	ft1, delta, a0	# ft1 is delta
+	fcvt.s.wu	ft2, t5	# ft2 is half of screen width as float
+	fcvt.s.wu	ft3, t6	# ft3 is half of screen height as float
 	
 # Get a from user
 	la	a0, aprompt
@@ -69,7 +71,7 @@ main:
 	li	a7, SYS_RDINT
 	ecall
 	
-	fcvt.s.wu	ft3, a0		# ft3 is a
+	fcvt.s.wu	ft4, a0		# ft4 is a
 
 # Get b from user
 	la	a0, bprompt
@@ -79,14 +81,14 @@ main:
 	li	a7, SYS_RDINT
 	ecall
 	
-	fcvt.s.wu	ft4, a0		# ft4 is b
+	fcvt.s.wu	ft5, a0		# ft5 is b
 	
 # Get coords at pi / 2
-	xcoord	fa0, ft0, ft1, ft3, ft0
+	xcoord	fa0, ft1, ft2, ft4, ft1
 	li	a7, SYS_PRNFLT
 	ecall
 	
-	ycoord	fa0, ft0, ft2, ft4, ft0
+	ycoord	fa0, ft1, ft3, ft5, ft1
 	li	a6, SYS_PRNFLT
 	ecall
 	
