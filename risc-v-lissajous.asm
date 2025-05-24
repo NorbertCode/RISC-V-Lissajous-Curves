@@ -38,10 +38,28 @@ y:		.float	0.0
 	fadd.s		%fdst, %fdst, ft8	# fdst = x - (x^3)/(3!) + (x^5)/(5!)
 .end_macro
 
+.macro	xcoord(%dst, %delta, %hwidth, %a, %t)
+	fmul.s		ft7, %a, %t		# ft7 = at
+	fadd.s		ft7, ft7, %delta	# ft7 = at - delta
+	sin		%dst, ft7		# xdst = sin(at - delta)
+	fmul.s		%dst, %dst, %hwidth	# xdst = halfwidth * sin(at - delta)
+	fadd.s		%dst, %dst, %hwidth	# xdst = halfwidth * sin(at - delta) + halfwidth
+.end_macro
+
+.macro	ycoord(%dst, %delta, %hheight, %b, %t)	
+	fmul.s		ft7, %b, %t		# ft7 = bt
+	sin		%dst, ft7		# ydst = sin(bt)
+	fmul.s		%dst, %dst, %hheight	# ydst = halfheight * sin(bt)
+	fadd.s		%dst, %dst, %hheight	# ydst = halfheight * sin(bt) + halfheight
+.end_macro
+
 main:
-	flw	ft0, delta, a0
 	li	t5, 128		# t5 is half of screen width
 	li	t6, 128		# t6 is half of screen height
+	
+	flw	ft0, delta, a0	# ft0 is delta
+	fcvt.s.wu	ft1, t5	# ft1 is half of screen width as float
+	fcvt.s.wu	ft2, t6	# ft2 is half of screen height as float
 	
 # Get a from user
 	la	a0, aprompt
@@ -51,7 +69,7 @@ main:
 	li	a7, SYS_RDINT
 	ecall
 	
-	fcvt.s.wu	ft1, a0		# t1 is a
+	fcvt.s.wu	ft3, a0		# ft3 is a
 
 # Get b from user
 	la	a0, bprompt
@@ -61,17 +79,18 @@ main:
 	li	a7, SYS_RDINT
 	ecall
 	
-	fcvt.s.wu	ft1, a0		# t2 is b
-
-	la	a0, delta
-	flw	ft0, (a0)
-	sin	fa0, ft0
+	fcvt.s.wu	ft4, a0		# ft4 is b
 	
-fin:
-# Temporarily print sine output
+# Get coords at pi / 2
+	xcoord	fa0, ft0, ft1, ft3, ft0
 	li	a7, SYS_PRNFLT
 	ecall
-
+	
+	ycoord	fa0, ft0, ft2, ft4, ft0
+	li	a6, SYS_PRNFLT
+	ecall
+	
+fin:
 # Exit
 	li	a7, SYS_EXIT0
 	ecall
