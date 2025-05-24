@@ -20,13 +20,23 @@ y:		.float	0.0
 	fmv.s		%fdst, %fsrc	# fdst = x,  will be result
 	
 # Second step of taylor series (x^3)/(3!)
-	fmul.s		ft11, %fsrc, %fsrc	# ft11 = x^2
-	fmul.s		ft11, ft11, %fsrc	# ft11 = x^3
-	li		a0, 6			# a0 = 3! = 6
-	fcvt.s.wu	ft10, a0		# ft10 is a0 as float
-	fdiv.s		ft11, ft11, ft10	# ft11 = (x^3)/(3!)
+	fmul.s		ft10, %fsrc, %fsrc	# ft10 = x^2
 	
-	fsub.s		%fdst, %fdst, ft11	# fdst = x - (x^3)/(3!)
+	fmul.s		ft9, ft10, %fsrc	# ft9 = x^3
+	li		a0, 6			# a0 = 3! = 6
+	fcvt.s.wu	ft11, a0		# ft11 is a0 as float
+	fdiv.s		ft8, ft9, ft11		# ft8 = (x^3)/(3!)
+	
+	fsub.s		%fdst, %fdst, ft8	# fdst = x - (x^3)/(3!)
+	
+# Third step of taylor series (x^5)/(5!)
+	fmul.s		ft9, ft9, ft10		# ft9 = x^5
+	li		a0, 120			# a0 = 5! = 120
+	fcvt.s.wu	ft11, a0		# ft11 is a0 as float
+	fdiv.s		ft8, ft9, ft11		# ft9 = (x^5)/(5!)
+	
+	fadd.s		%fdst, %fdst, ft8	# fdst = x - (x^3)/(3!) + (x^5)/(5!)
+	
 .end_macro
 
 main:
