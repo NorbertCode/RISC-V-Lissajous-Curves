@@ -2,6 +2,8 @@
 	.eqv	SYS_PRNSTR, 4
 	.eqv	SYS_RDINT, 5
 	.eqv	SYS_EXIT0, 10
+	.eqv	SYS_PRNCHR, 11
+	.eqv	SYS_SLEEP, 32
 	.eqv	SYS_PRNINTU, 36
 
 	.data
@@ -10,6 +12,8 @@ bprompt:	.asciz	"Enter b: "
 
 pi:		.float	3.1416
 delta:		.float	1.5708		# pi / 2
+
+step:		.float	1.0
 	
 	.text
 	
@@ -58,6 +62,11 @@ main:
 	li	t6, 128		# t6 is half of screen size
 	fcvt.s.wu	ft2, t6	# ft2 is half of screen size as float
 	
+	fmv.s	ft5, ft0
+	fadd.s	ft5, ft5, ft5	# ft5 = 2pi, is counter to 0
+	
+	flw	ft6, step, a0	# ft6 is counter step
+	
 # Get a from user
 	la	a0, aprompt
 	li	a7, SYS_PRNSTR
@@ -78,14 +87,32 @@ main:
 	
 	fcvt.s.wu	ft4, a0		# ft4 is b
 	
-# Get coords at pi / 2
-	xcoord	fa0, ft1, ft2, ft3, ft1
+printcoords:
+	xcoord	fa0, ft1, ft2, ft3, ft5
 	li	a7, SYS_PRNFLT
 	ecall
 	
-	ycoord	fa0, ft1, ft2, ft4, ft1
-	li	a6, SYS_PRNFLT
+	li	a0, ' '
+	li	a7, SYS_PRNCHR
 	ecall
+	
+	ycoord	fa0, ft1, ft2, ft4, ft5
+	li	a7, SYS_PRNFLT
+	ecall
+	
+	li	a0, '\n'
+	li	a7, SYS_PRNCHR
+	ecall
+	
+	li	a0, 100
+	li	a7, SYS_SLEEP
+	ecall
+	
+	fsub.s	ft5, ft5, ft6
+	li	a0, 0
+	fcvt.s.wu	ft7, a0
+	fge.s	t5, ft5, ft7		# t5 is 1 if counter >= 0
+	bnez	t5, printcoords
 	
 fin:
 # Exit
