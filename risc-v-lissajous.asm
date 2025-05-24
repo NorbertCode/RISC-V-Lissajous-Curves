@@ -108,13 +108,12 @@ printcoords:
 	li	a7, SYS_SLEEP
 	ecall
 	
-	fsub.s	ft5, ft5, ft6
-	li	a0, 0
+	fsub.s		ft5, ft5, ft6
+	li		a0, 0
 	fcvt.s.wu	ft7, a0
-	fge.s	t5, ft5, ft7		# t5 is 1 if counter >= 0
-	bnez	t5, printcoords
+	fge.s		t6, ft5, ft7		# t6 is 1 if counter >= 0
+	bnez		t6, printcoords
 	
 fin:
-# Exit
 	li	a7, SYS_EXIT0
 	ecall
