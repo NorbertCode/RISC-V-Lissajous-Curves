@@ -11,9 +11,13 @@ aprompt:	.asciz	"Enter a: "
 bprompt:	.asciz	"Enter b: "
 
 twopi:		.float	6.2832	# 2pi
-delta:		.float	1.5708	# pi / 2
 
-step:		.float	1.0
+delta:		.float	1.5708	# pi / 2
+step:		.float	0.01
+
+screensize:	.word	256
+displaystart:	.word	0x10010000
+color:		.word	0x00FFFFFF
 	
 	.text
 .macro	sin(%fdst, %fsrc)
@@ -81,14 +85,17 @@ taylorfin:
 .end_macro
 
 main:
-	flw	ft0, twopi, a0	# ft0 is 2pi
-	flw	ft1, delta, a0	# ft1 is delta
+	flw	ft0, twopi, a0		# ft0 is 2pi
+	flw	ft1, delta, a0		# ft1 is delta
 	
-	li		t6, 128	# t6 is half of screen size
-	fcvt.s.wu	ft2, t6	# ft2 is half of screen size as float
+	lw		t0, displaystart# t0 is display start
+
+	lw		t6, screensize
+	srai		t6, t6, 1	# t6 is half of screen size
+	fcvt.s.wu	ft2, t6		# ft2 is half of screen size as float
 	
-	fmv.s	ft5, ft0	# ft5 = 2pi, is counter to 0
-	flw	ft6, step, a0	# ft6 is counter step
+	fmv.s	ft5, ft0		# ft5 = 2pi, is counter to 0
+	flw	ft6, step, a0		# ft6 is counter step
 	
 # Get a from user
 	la	a0, aprompt
@@ -110,32 +117,31 @@ main:
 	
 	fcvt.s.wu	ft4, a0		# ft4 is b
 	
-printcoords:
-	xcoord	fa0, ft1, ft2, ft3, ft5
-	li	a7, SYS_PRNFLT
-	ecall
+drawpixel:
+	xcoord		fa0, ft1, ft2, ft3, ft5
+	fcvt.wu.s	t1, fa0		# t1 is x pixel
 	
-	li	a0, ' '
-	li	a7, SYS_PRNCHR
-	ecall
+	ycoord		fa0, ft1, ft2, ft4, ft5
+	fcvt.wu.s	t2, fa0		# t2 is y pixel
 	
-	ycoord	fa0, ft1, ft2, ft4, ft5
-	li	a7, SYS_PRNFLT
-	ecall
+	lw	t4, color
+	lw	t3, screensize
+	mul	t3, t3, t2
+	add	t3, t3, t1
+	slli	t3, t3, 2
+	add	a0, t0, t3
+	sw	t4, (a0)
 	
-	li	a0, '\n'
-	li	a7, SYS_PRNCHR
-	ecall
-	
-	li	a0, 100
+	li	a0, 10
 	li	a7, SYS_SLEEP
 	ecall
 	
+# Counter
 	fsub.s		ft5, ft5, ft6
 	li		a0, 0
 	fcvt.s.wu	ft7, a0
 	fge.s		t6, ft5, ft7	# t6 is 1 if counter >= 0
-	bnez		t6, printcoords
+	bnez		t6, drawpixel
 	
 fin:
 	li	a7, SYS_EXIT0
