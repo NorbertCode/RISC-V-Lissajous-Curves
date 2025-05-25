@@ -118,25 +118,31 @@ main:
 	fcvt.s.wu	ft4, a0		# ft4 is b
 	
 drawpixel:
+# Calculate coordinates
 	xcoord		fa0, ft1, ft2, ft3, ft5
 	fcvt.wu.s	t1, fa0		# t1 is x pixel
 	
 	ycoord		fa0, ft1, ft2, ft4, ft5
 	fcvt.wu.s	t2, fa0		# t2 is y pixel
 	
-	lw	t4, color
-	lw	t3, screensize
-	mul	t3, t3, t2
-	add	t3, t3, t1
-	slli	t3, t3, 2
-	add	a0, t0, t3
+# Get values
+	lw	t4, color	# t4 is color
+	lw	t3, screensize	# t3 is screen size
+	
+# Calculate pixel address
+	mul	t3, t3, t2	# t3 = y * screensize
+	add	t3, t3, t1	# t3 = (y * screensize) + x
+	slli	t3, t3, 2	# t3 = 4((y * screensize) + x)
+	add	a0, t0, t3	# a0 = displaystart + 4((y * screensize) + x)
+	
 	sw	t4, (a0)
 	
+# Sleep
 	li	a0, 10
 	li	a7, SYS_SLEEP
 	ecall
 	
-# Counter
+# Loop
 	fsub.s		ft5, ft5, ft6
 	li		a0, 0
 	fcvt.s.wu	ft7, a0
