@@ -35,19 +35,18 @@ color:		.word	0x00FFFFFF
 # Preparations for further steps
 	fmul.s	ft10, ft9, ft9	# ft10 = x^2
 	
-	li	t3, 4		# t3 is taylor step counter
+	li	t4, 4		# t4 is taylor step counter
 	
 	li	t6, 1		# t6 is current step denominator without factorial (1, 3, 5, ...)
 	li	t5, 1		# t5 is current step denominator factorial (1!, 3!, 5!, ...)
-
-resetfactorial:
-	li	t4, 2		# t4 is factorial counter, each step needs + 2
 	
 factorial:
 	addi	t6, t6, 1	# increment denominator base
 	mul	t5, t5, t6	# multiply by new number
-	addi	t4, t4, -1	# each step repeated twice, so decrement
-	bgtz	t4, factorial
+	
+# Repeat
+	addi	t6, t6, 1
+	mul	t5, t5, t6
 	
 	fcvt.s.wu	ft11, t5	# ft11 is t5 as float
 
@@ -55,8 +54,8 @@ taylorstep:
 	fmul.s	ft9, ft9, ft10		# ft9 = x^3 in second step
 	fdiv.s	ft8, ft9, ft11		# ft8 = (x^3)/(3!) in second step
 	
-	andi	t4, t3, 1		# t4 is 0 if step is divisible by 2
-	bnez	t4, tayloradd
+	andi	a0, t4, 1		# a0 is 0 if step is divisible by 2
+	bnez	a0, tayloradd
 	
 	fsub.s	%fdst, %fdst, ft8	# fdst = x - (x^3)/(3!)
 	b	taylorfin
@@ -65,8 +64,8 @@ tayloradd:
 	fadd.s	%fdst, %fdst, ft8	# fdst = x + (x^3)/(3!)
 	
 taylorfin:
-	addi	t3, t3, -1
-	bgtz	t3, resetfactorial
+	addi	t4, t4, -1
+	bgtz	t4, factorial
 .end_macro
 
 .macro	xcoord(%dst, %delta, %hsize, %a, %t)
@@ -88,10 +87,11 @@ main:
 	flw	ft0, twopi, a0		# ft0 is 2pi
 	flw	ft1, delta, a0		# ft1 is delta
 	
-	lw		t0, displaystart# t0 is display start
+	lw	t0, screensize		# t0 is screen size
+	lw	t1, displaystart	# t1 is display start
+	lw	t2, color		# t2 is color
 
-	lw		t6, screensize
-	srai		t6, t6, 1	# t6 is half of screen size
+	srai		t6, t0, 1
 	fcvt.s.wu	ft2, t6		# ft2 is half of screen size as float
 	
 	fmv.s	ft5, ft0		# ft5 = 2pi, is counter to 0
@@ -120,22 +120,18 @@ main:
 drawpixel:
 # Calculate coordinates
 	xcoord		fa0, ft1, ft2, ft3, ft5
-	fcvt.wu.s	t1, fa0		# t1 is x pixel
+	fcvt.wu.s	t3, fa0		# t3 is x pixel
 	
 	ycoord		fa0, ft1, ft2, ft4, ft5
-	fcvt.wu.s	t2, fa0		# t2 is y pixel
-	
-# Get values
-	lw	t4, color	# t4 is color
-	lw	t3, screensize	# t3 is screen size
+	fcvt.wu.s	t4, fa0		# t4 is y pixel
 	
 # Calculate pixel address
-	mul	t3, t3, t2	# t3 = y * screensize
-	add	t3, t3, t1	# t3 = (y * screensize) + x
-	slli	t3, t3, 2	# t3 = 4((y * screensize) + x)
-	add	a0, t0, t3	# a0 = displaystart + 4((y * screensize) + x)
+	mul	t5, t4, t0	# t3 = y * screensize
+	add	t5, t5, t3	# t3 = (y * screensize) + x
+	slli	t5, t5, 2	# t3 = 4((y * screensize) + x)
+	add	t5, t5, t1	# a0 = displaystart + 4((y * screensize) + x)
 	
-	sw	t4, (a0)
+	sw	t2, (t5)
 	
 # Sleep
 	li	a0, 10
