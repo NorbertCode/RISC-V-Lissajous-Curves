@@ -10,20 +10,26 @@
 aprompt:	.asciz	"Enter a: "
 bprompt:	.asciz	"Enter b: "
 
-pi:		.float	3.1416
+twopi:		.float	6.2832		# 2pi
 delta:		.float	1.5708		# pi / 2
 
 step:		.float	1.0
 	
 	.text
-	
 .macro	sin(%fdst, %fsrc)
+# Normalize fsrc to <-pi, pi>
+	fmv.s		ft9, %fsrc		# ft9 = x
+	fdiv.s		ft8, ft9, ft0	# ft8 = x / 2pi
+	fcvt.w.s	t6, ft8
+	fcvt.s.w	ft8, t6			# ft8 = round(x / 2pi)
+	fmul.s		ft8, ft8, ft0	# ft8 = 2pi * round(x / 2pi)
+	fsub.s		ft9, ft9, ft8		# ft9 = x - 2pi * round(x / 2pi), so x is normalized to <-pi, pi>
+
 # First step of taylor series x
-	fmv.s		%fdst, %fsrc	# fdst = x
-	
+	fmv.s	%fdst, ft9	# fdst = x
+
 # Preparations for further steps
-	fmv.s		ft9, %fsrc		# ft9 = x	
-	fmul.s		ft10, %fsrc, %fsrc	# ft10 = x^2
+	fmul.s	ft10, ft9, ft9	# ft10 = x^2
 	
 	li	t3, 4		# t3 is taylor step counter
 	
@@ -39,20 +45,20 @@ factorial:
 	addi	t4, t4, -1	# each step repeated twice, so decrement
 	bgtz	t4, factorial
 	
-	fcvt.s.wu	ft11, t5		# ft11 is t5 as float
+	fcvt.s.wu	ft11, t5	# ft11 is t5 as float
 
 taylorstep:	
-	fmul.s		ft9, ft9, ft10		# ft9 = x^3 in second step
-	fdiv.s		ft8, ft9, ft11		# ft8 = (x^3)/(3!) in second step
+	fmul.s	ft9, ft9, ft10		# ft9 = x^3 in second step
+	fdiv.s	ft8, ft9, ft11		# ft8 = (x^3)/(3!) in second step
 	
-	andi	t4, t3, 1	# t4 is 0 if step is divisible by 2
+	andi	t4, t3, 1		# t4 is 0 if step is divisible by 2
 	bnez	t4, tayloradd
 	
-	fsub.s		%fdst, %fdst, ft8	# fdst = x - (x^3)/(3!)
+	fsub.s	%fdst, %fdst, ft8	# fdst = x - (x^3)/(3!)
 	b	taylorfin
 
 tayloradd:
-	fadd.s		%fdst, %fdst, ft8	# fdst = x + (x^3)/(3!)
+	fadd.s	%fdst, %fdst, ft8	# fdst = x + (x^3)/(3!)
 	
 taylorfin:
 	addi	t3, t3, -1
@@ -75,14 +81,13 @@ taylorfin:
 .end_macro
 
 main:
-	flw	ft0, pi, a0	# ft0 is pi
+	flw	ft0, twopi, a0	# ft0 is pi
 	flw	ft1, delta, a0	# ft1 is delta
 	
 	li	t6, 128		# t6 is half of screen size
 	fcvt.s.wu	ft2, t6	# ft2 is half of screen size as float
 	
-	fmv.s	ft5, ft0
-	fadd.s	ft5, ft5, ft5	# ft5 = 2pi, is counter to 0
+	fmv.s	ft5, ft0	# ft5 = 2pi, is counter to 0
 	
 	flw	ft6, step, a0	# ft6 is counter step
 	
