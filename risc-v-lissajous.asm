@@ -21,23 +21,42 @@ step:		.float	1.0
 # First step of taylor series x
 	fmv.s		%fdst, %fsrc	# fdst = x
 	
-# Second step of taylor series (x^3)/(3!)
+# Preparations for further steps
+	fmv.s		ft9, %fsrc		# ft9 = x	
 	fmul.s		ft10, %fsrc, %fsrc	# ft10 = x^2
 	
-	fmul.s		ft9, ft10, %fsrc	# ft9 = x^3
-	li		a0, 6			# a0 = 3! = 6
-	fcvt.s.wu	ft11, a0		# ft11 is a0 as float
-	fdiv.s		ft8, ft9, ft11		# ft8 = (x^3)/(3!)
+	li	t3, 4		# t3 is taylor step counter
+	
+	li	t6, 1		# t6 is current step denominator without factorial (1, 3, 5, ...)
+	li	t5, 1		# t5 is current step denominator factorial (1!, 3!, 5!, ...)
+
+resetfactorial:
+	li	t4, 2		# t4 is factorial counter, each step needs + 2
+	
+factorial:
+	addi	t6, t6, 1	# increment denominator base
+	mul	t5, t5, t6	# multiply by new number
+	addi	t4, t4, -1	# each step repeated twice, so decrement
+	bgtz	t4, factorial
+	
+	fcvt.s.wu	ft11, t5		# ft11 is t5 as float
+
+taylorstep:	
+	fmul.s		ft9, ft9, ft10		# ft9 = x^3 in second step
+	fdiv.s		ft8, ft9, ft11		# ft8 = (x^3)/(3!) in second step
+	
+	andi	t4, t3, 1	# t4 is 0 if step is divisible by 2
+	bnez	t4, tayloradd
 	
 	fsub.s		%fdst, %fdst, ft8	# fdst = x - (x^3)/(3!)
+	b	taylorfin
+
+tayloradd:
+	fadd.s		%fdst, %fdst, ft8	# fdst = x + (x^3)/(3!)
 	
-# Third step of taylor series (x^5)/(5!)
-	fmul.s		ft9, ft9, ft10		# ft9 = x^5
-	li		a0, 120			# a0 = 5! = 120
-	fcvt.s.wu	ft11, a0		# ft11 is a0 as float
-	fdiv.s		ft8, ft9, ft11		# ft9 = (x^5)/(5!)
-	
-	fadd.s		%fdst, %fdst, ft8	# fdst = x - (x^3)/(3!) + (x^5)/(5!)
+taylorfin:
+	addi	t3, t3, -1
+	bgtz	t3, resetfactorial
 .end_macro
 
 .macro	xcoord(%dst, %delta, %hsize, %a, %t)
