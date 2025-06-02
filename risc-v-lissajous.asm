@@ -1,10 +1,7 @@
-	.eqv	SYS_PRNFLT, 2
 	.eqv	SYS_PRNSTR, 4
 	.eqv	SYS_RDINT, 5
 	.eqv	SYS_EXIT0, 10
-	.eqv	SYS_PRNCHR, 11
 	.eqv	SYS_SLEEP, 32
-	.eqv	SYS_PRNINTU, 36
 
 	.data
 aprompt:	.asciz	"Enter a: "
