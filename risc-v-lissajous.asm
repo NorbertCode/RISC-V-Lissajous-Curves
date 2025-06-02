@@ -69,18 +69,15 @@ taylorfin:
 .end_macro
 
 .macro	xcoord(%dst, %delta, %hsize, %a, %t)
-	fmul.s		ft7, %a, %t		# ft7 = at
-	fadd.s		ft7, ft7, %delta	# ft7 = at - delta
-	sin		%dst, ft7		# dst = sin(at - delta)
-	fmul.s		%dst, %dst, %hsize	# dst = halfsize * sin(at - delta)
-	fadd.s		%dst, %dst, %hsize	# dst = halfsize * sin(at - delta) + halfsize
+	fmadd.s		ft7, %a, %t, %delta		# ft7 = at - delta
+	sin		%dst, ft7			# dst = sin(at - delta)
+	fmadd.s		%dst, %dst, %hsize, %hsize	# dst = halfsize * sin(at - delta) + halfsize
 .end_macro
 
 .macro	ycoord(%dst, %delta, %hsize, %b, %t)	
-	fmul.s		ft7, %b, %t		# ft7 = bt
-	sin		%dst, ft7		# dst = sin(bt)
-	fmul.s		%dst, %dst, %hsize	# dst = halfsize * sin(bt)
-	fadd.s		%dst, %dst, %hsize	# dst = halfsize * sin(bt) + halfsize
+	fmul.s		ft7, %b, %t			# ft7 = bt
+	sin		%dst, ft7			# dst = sin(bt)
+	fmadd.s		%dst, %dst, %hsize, %hsize	# dst = halfsize * sin(bt) + halfsize
 .end_macro
 
 main:
