@@ -10,7 +10,7 @@ bprompt:	.asciz	"Enter b: "
 twopi:		.float	6.2832	# 2pi
 
 delta:		.float	1.5708	# pi / 2
-step:		.float	0.01
+pointamount:	.word	512
 
 screensize:	.word	256
 displaystart:	.word	0x10010000
@@ -88,8 +88,8 @@ main:
 	srai		t6, t0, 1
 	fcvt.s.wu	ft2, t6		# ft2 is half of screen size as float
 	
-	fmv.s	ft5, ft0		# ft5 = 2pi, is counter to 0
-	flw	ft6, step, a0		# ft6 is counter step
+	lw		a1, pointamount	# a1 is point amount, counter
+	fcvt.s.wu	ft6, a1		# ft5 is point amount, total as float
 	
 # Get a from user
 	la	a0, aprompt
@@ -112,6 +112,15 @@ main:
 	fcvt.s.wu	ft4, a0		# ft4 is b
 	
 drawpixel:
+# Convert current point to <-pi, pi>
+	fcvt.s.wu	ft5, a1		# ft5 is current point
+	fdiv.s		ft5, ft5, ft6	# ft5 is in <0, 1>
+	fmul.s		ft5, ft5, ft0	# ft5 is in <0, 2pi>
+	li		t6, 2
+	fcvt.s.wu	ft8, t6
+	fdiv.s		ft7, ft0, ft8	# ft7 = pi
+	fsub.s		ft5, ft5, ft7	# ft is in <-pi, pi>
+
 # Calculate coordinates
 	xcoord		fa0, ft1, ft2, ft3, ft5
 	fcvt.wu.s	t3, fa0		# t3 is x pixel
@@ -133,11 +142,8 @@ drawpixel:
 	ecall
 	
 # Loop
-	fsub.s		ft5, ft5, ft6
-	li		a0, 0
-	fcvt.s.wu	ft7, a0
-	fge.s		t6, ft5, ft7	# t6 is 1 if counter >= 0
-	bnez		t6, drawpixel
+	addi		a1, a1, -1
+	bgtz		a1, drawpixel
 	
 fin:
 	li	a7, SYS_EXIT0
