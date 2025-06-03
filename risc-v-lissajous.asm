@@ -32,7 +32,7 @@ color:		.word	0x00FFFFFF
 # Preparations for further steps
 	fmul.s	ft10, ft9, ft9	# ft10 = x^2
 	
-	li	t4, 4		# t4 is taylor step counter
+	li	t4, 6		# t4 is taylor step counter
 	
 	li	t6, 1		# t6 is current step denominator without factorial (1, 3, 5, ...)
 	li	t5, 1		# t5 is current step denominator factorial (1!, 3!, 5!, ...)
@@ -89,7 +89,7 @@ main:
 	fcvt.s.wu	ft2, t6		# ft2 is half of screen size as float
 	
 	lw	a1, screensize	# a1 is counter = screensize
-	slli	a1, a1, 1	# a1 = 2 * screensize
+	slli	a1, a1, 2	# a1 = 8 * screensize
 	
 # Get a from user
 	la	a0, aprompt
@@ -115,11 +115,11 @@ main:
 
 # Initialize point counter
 	bgtu	a2, a0, mulb
-	mul	a1, a1, a2	# a1 = 2 * a * screensize
+	mul	a1, a1, a2	# a1 = 8 * a * screensize
 	b	endcomp
 	
 mulb:
-	mul	a1, a1, a0	# a1 = 2 * b * screensize
+	mul	a1, a1, a0	# a1 = 8 * b * screensize
 	
 endcomp:
 	fcvt.s.wu	ft6, a1		# ft5 is point amount, total as float
