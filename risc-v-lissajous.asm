@@ -116,10 +116,6 @@ drawpixel:
 	fcvt.s.wu	ft5, a1		# ft5 is current point
 	fdiv.s		ft5, ft5, ft6	# ft5 is in <0, 1>
 	fmul.s		ft5, ft5, ft0	# ft5 is in <0, 2pi>
-	li		t6, 2
-	fcvt.s.wu	ft8, t6
-	fdiv.s		ft7, ft0, ft8	# ft7 = pi
-	fsub.s		ft5, ft5, ft7	# ft is in <-pi, pi>
 
 # Calculate coordinates
 	xcoord		fa0, ft1, ft2, ft3, ft5
