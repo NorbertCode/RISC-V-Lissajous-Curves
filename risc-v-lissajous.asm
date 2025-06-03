@@ -99,7 +99,7 @@ main:
 	li	a7, SYS_RDINT
 	ecall
 	
-	mul	a1, a1, a0	# a1 = 2 * a * screensize
+	mv	a2, a0		# Remember a to compare later
 	
 	fcvt.s.wu	ft3, a0		# ft3 is a
 
@@ -111,11 +111,17 @@ main:
 	li	a7, SYS_RDINT
 	ecall
 	
-	mul	a1, a1, a0	# a1 = 2 * a * b * screensize
-	
 	fcvt.s.wu	ft4, a0		# ft4 is b
 
-# Initalize point counter
+# Initialize point counter
+	bgtu	a2, a0, mulb
+	mul	a1, a1, a2	# a1 = 2 * a * screensize
+	b	endcomp
+	
+mulb:
+	mul	a1, a1, a0	# a1 = 2 * b * screensize
+	
+endcomp:
 	fcvt.s.wu	ft6, a1		# ft5 is point amount, total as float
 	
 drawpixel:
