@@ -2,6 +2,8 @@
 	.eqv	SYS_RDINT, 5
 	.eqv	SYS_EXIT0, 10
 	.eqv	SYS_SLEEP, 32
+	
+	.eqv	DIS_START, 0x10010000
 
 	.data
 aprompt:	.asciz	"Enter a: "
@@ -10,17 +12,15 @@ bprompt:	.asciz	"Enter b: "
 twopi:		.float	6.2832	# 2pi
 
 delta:		.float	1.5708	# pi / 2
-pointamount:	.word	512
 
-screensize:	.word	256
-displaystart:	.word	0x10010000
+screensize:	.word	512
 color:		.word	0x00FFFFFF
 	
 	.text
 .macro	sin(%fdst, %fsrc)
 # Normalize fsrc to <-pi, pi>
 	fmv.s		ft9, %fsrc	# ft9 = x
-	fdiv.s		ft8, ft9, ft0	# ft8 = x / 2pi
+	fdiv.s		ft8, ft9, ft0	# ft8 = x / 2pi		
 	fcvt.w.s	t6, ft8
 	fcvt.s.w	ft8, t6		# ft8 = round(x / 2pi)
 	fmul.s		ft8, ft8, ft0	# ft8 = 2pi * round(x / 2pi)
@@ -82,14 +82,14 @@ main:
 	flw	ft1, delta, a0		# ft1 is delta
 	
 	lw	t0, screensize		# t0 is screen size
-	lw	t1, displaystart	# t1 is display start
+	li	t1, DIS_START		# t1 is display start
 	lw	t2, color		# t2 is color
 
 	srai		t6, t0, 1
 	fcvt.s.wu	ft2, t6		# ft2 is half of screen size as float
 	
-	lw		a1, pointamount	# a1 is point amount, counter
-	fcvt.s.wu	ft6, a1		# ft5 is point amount, total as float
+	lw	a1, screensize	# a1 is counter = screensize
+	slli	a1, a1, 1	# a1 = 2 * screensize
 	
 # Get a from user
 	la	a0, aprompt
@@ -98,6 +98,8 @@ main:
 	
 	li	a7, SYS_RDINT
 	ecall
+	
+	mul	a1, a1, a0	# a1 = 2 * a * screensize
 	
 	fcvt.s.wu	ft3, a0		# ft3 is a
 
@@ -109,7 +111,12 @@ main:
 	li	a7, SYS_RDINT
 	ecall
 	
+	mul	a1, a1, a0	# a1 = 2 * a * b * screensize
+	
 	fcvt.s.wu	ft4, a0		# ft4 is b
+
+# Initalize point counter
+	fcvt.s.wu	ft6, a1		# ft5 is point amount, total as float
 	
 drawpixel:
 # Convert current point to <-pi, pi>
@@ -133,7 +140,7 @@ drawpixel:
 	sw	t2, (t5)
 	
 # Sleep
-	li	a0, 10
+	li	a0, 1
 	li	a7, SYS_SLEEP
 	ecall
 	
